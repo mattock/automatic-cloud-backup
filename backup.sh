@@ -3,9 +3,14 @@ USERNAME=youruser
 PASSWORD=yourpassword
 INSTANCE=example.atlassian.net
 LOCATION=/where/to/store/the/file
+
+# Set this to your Atlassian instance's timezone.
+# See this for a list of possible values:
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIMEZONE=America/Los_Angeles
  
 # Grabs cookies and generates the backup on the UI. 
-TODAY=`date +%Y%m%d`
+TODAY=`TZ=$TIMEZONE date +%Y%m%d`
 COOKIE_FILE_LOCATION=jiracookie
 curl --silent -u $USERNAME:$PASSWORD --cookie-jar $COOKIE_FILE_LOCATION https://${INSTANCE}/Dashboard.jspa --output /dev/null
 BKPMSG=`curl -s --cookie $COOKIE_FILE_LOCATION --header "X-Atlassian-Token: no-check" -H "X-Requested-With: XMLHttpRequest" -H "Content-Type: application/json"  -X POST https://${INSTANCE}/rest/obm/1.0/runbackup -d '{"cbAttachments":"true" }' `
