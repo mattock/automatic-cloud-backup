@@ -20,7 +20,7 @@ fi
 #Checks if the backup exists in WebDAV every 10 seconds, 20 times. If you have a bigger instance with a larger backup file you'll probably want to increase that.
 for (( c=1; c<=20; c++ ))
 do
-wget --user=$USERNAME --password=$PASSWORD --spider https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip >/dev/null 2>/dev/null
+wget --user=$USERNAME --password=$PASSWORD --spider https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip >/dev/null 2>/dev/null || OK=$?
 OK=$?
 if [ $OK -eq 0 ]; then
 break
@@ -35,5 +35,5 @@ exit
 else
  
 #If it's confirmed that the backup exists on WebDAV the file get's copied to the $LOCATION directory.
-wget --user=$USERNAME --password=$PASSWORD -t 0 --retry-connrefused https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip -P $LOCATION >/dev/null 2>/dev/null
+wget --user=$USERNAME --password=$PASSWORD -t 0 --retry-connrefused https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip -P "$LOCATION" >/dev/null 2>/dev/null
 fi
