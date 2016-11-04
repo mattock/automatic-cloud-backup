@@ -18,6 +18,7 @@ BKPMSG=`curl -s --cookie $COOKIE_FILE_LOCATION --header "X-Atlassian-Token: no-c
 #Checks if the backup procedure has failed
 if [ `echo $BKPMSG | grep -i backup | wc -l` -ne 0 ]; then
 #The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
+rm $COOKIE_FILE_LOCATION
 exit
 fi
 
@@ -40,6 +41,7 @@ done
 #If after 20 attempts it still fails it ends the script.
 if [ -z $FILE_NAME ];
 then
+rm $COOKIE_FILE_LOCATION
 exit
 else
 
