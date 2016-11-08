@@ -40,8 +40,6 @@ $pathName = $status.fileName
 if ($pathName -match "ondemandbackupmanager/download/.+/(.*)") {
     $fileName = $Matches[1]
     Write-Host "Downloading: $fileName to JIRA-backup-$today.zip"
-    $download_headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-    $download_headers.Add("Accept", '*/*')
     $progressPreference = 'Continue'
     Invoke-WebRequest -Method Get -Headers @{"Accept"="*/*"} -WebSession $session -Uri "https://$hostname/$pathName" -OutFile (Join-Path -Path $destination -ChildPath "JIRA-backup-$today.zip")
 } else {
