@@ -43,7 +43,7 @@ if ($pathName -match "ondemandbackupmanager/download/.+/(.*)") {
     $progressPreference = 'Continue'
     Invoke-WebRequest -Method Get -Headers @{"Accept"="*/*"} -WebSession $session -Uri "https://$hostname/$pathName" -OutFile (Join-Path -Path $destination -ChildPath "JIRA-backup-$today.zip")
 } else {
-    Write-Host "Dowlnoading: $pathName to JIRA-backup-$today.zip"
+    Write-Host "Downloading: $pathName to JIRA-backup-$today.zip"
     $progressPreference = 'Continue'
     Invoke-WebRequest "https://$hostname/webdav/backupmanager/$pathName" -Credential $credential -OutFile (Join-Path -Path $destination -ChildPath "JIRA-backup-$today.zip")    
 }
