@@ -3,6 +3,7 @@ USERNAME=youruser
 PASSWORD=yourpassword
 INSTANCE=example.atlassian.net
 LOCATION=/where/to/store/the/file
+TIMESTAMP=true
 
 # Set this to your Atlassian instance's timezone.
 # See this for a list of possible values:
@@ -11,6 +12,19 @@ TIMEZONE=America/Los_Angeles
  
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
+
+#Check if we should overwrite the previous backup or append a timestamp to 
+#prevent just that. The former is useful when an external backup program handles 
+#backup rotation.
+if [[ $TIMESTAMP == "true" ]]; then
+    OUTFILE="${LOCATION}/JIRA-backup-${TODAY}.zip"
+elif [[ $TIMESTAMP == "false" ]]; then
+    OUTFILE="${LOCATION}/JIRA-backup.zip"
+else
+    echo "ERROR: invalid value for TIMESTAMP: should be either \"true\" or \"false\""
+    exit 1
+fi
+
 COOKIE_FILE_LOCATION=jiracookie
 curl --silent --cookie-jar $COOKIE_FILE_LOCATION -X POST "https://${INSTANCE}/rest/auth/1/session" -d "{\"username\": \"$USERNAME\", \"password\": \"$PASSWORD\"}" -H 'Content-Type: application/json' --output /dev/null
 #The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
@@ -48,10 +62,10 @@ else
 #If it's confirmed that the backup exists the file get's copied to the $LOCATION directory.
 if [[ $FILE_NAME == *"ondemandbackupmanager/download"* ]]; then
 #Download the new way, starting Nov 2016
-wget --load-cookies=$COOKIE_FILE_LOCATION -t 0 --retry-connrefused "https://${INSTANCE}/$FILE_NAME" -O "$LOCATION/JIRA-backup-${TODAY}.zip" >/dev/null 2>/dev/null
+wget --load-cookies=$COOKIE_FILE_LOCATION -t 0 --retry-connrefused "https://${INSTANCE}/$FILE_NAME" -O "$OUTFILE" >/dev/null 2>/dev/null
 else
 #Backward compatible download that will not be supported after Nov 2016
-wget --user=$USERNAME --password=$PASSWORD -t 0 --retry-connrefused "https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip" -P "$LOCATION" >/dev/null 2>/dev/null
+wget --user=$USERNAME --password=$PASSWORD -t 0 --retry-connrefused "https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip" -O "$OUTFILE" >/dev/null 2>/dev/null
 fi
 
 fi
