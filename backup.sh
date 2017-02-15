@@ -1,15 +1,14 @@
 #!/bin/bash
-USERNAME=youruser
-PASSWORD=yourpassword
-INSTANCE=example.atlassian.net
-LOCATION=/where/to/store/the/file
-TIMESTAMP=true
 
-# Set this to your Atlassian instance's timezone.
-# See this for a list of possible values:
-# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-TIMEZONE=America/Los_Angeles
- 
+CONFIG="$HOME/.backup.sh.vars"
+
+if [[ -r "$CONFIG" ]]; then
+    . $CONFIG
+else
+    echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
+    exit 1
+fi
+
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
 

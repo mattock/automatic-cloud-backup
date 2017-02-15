@@ -1,0 +1,14 @@
+USERNAME=youruser
+PASSWORD=yourpassword
+INSTANCE=example.atlassian.net
+LOCATION=/where/to/store/the/file
+
+# Append a timestamp to the backed up file (true/false). Set to false if an  
+# external backup applications handles backup rotatoin. 
+TIMESTAMP=true
+
+# Set this to your Atlassian instance's timezone.
+# See this for a list of possible values:
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIMEZONE=America/Los_Angeles
+
