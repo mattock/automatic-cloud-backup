@@ -61,7 +61,7 @@ else
 #If it's confirmed that the backup exists the file get's copied to the $LOCATION directory.
 if [[ $FILE_NAME == *"ondemandbackupmanager/download"* ]]; then
 #Download the new way, starting Nov 2016
-wget --load-cookies=$COOKIE_FILE_LOCATION -t 0 --retry-connrefused "https://${INSTANCE}/$FILE_NAME" -O "$OUTFILE" >/dev/null 2>/dev/null
+curl -s -L --cookie $COOKIE_FILE_LOCATION "https://${INSTANCE}/$FILE_NAME" -o "$OUTFILE" 
 else
 #Backward compatible download that will not be supported after Nov 2016
 wget --user=$USERNAME --password=$PASSWORD -t 0 --retry-connrefused "https://${INSTANCE}/webdav/backupmanager/JIRA-backup-${TODAY}.zip" -O "$OUTFILE" >/dev/null 2>/dev/null
