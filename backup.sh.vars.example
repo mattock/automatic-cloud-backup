@@ -12,3 +12,8 @@ TIMESTAMP=true
 # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 TIMEZONE=America/Los_Angeles
 
+# Set how many seconds to sleep till the next check if the backup is ready to download
+SLEEP_SECONDS=10
+
+# Set how often the progress of the backup should be checked before to exit the script.
+PROGRESS_CHECKS=20

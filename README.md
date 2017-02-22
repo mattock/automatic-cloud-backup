@@ -22,11 +22,31 @@ environment.
 
 Using the script is straightforward. To backup JIRA:
 
-    ./backup.sh jira
+    ./backup.sh --source jira
 
 To backup Confluence (wiki):
 
-    ./backup.sh wiki
+    ./backup.sh --source wiki
+
+To backup JIRA without attachments:
+
+    ./backup.sh --source jira --attachments false
+
+Arguments overview:
+
+* -a, --attachments
+
+     Set if attachments should be in the backup. Values are "true" (default) or "false".
+
+* -s, --source
+
+    Set what backup should be created. Default source is Jira. Set the argument to "wiki" or "confluence" to backup Confluence.
+
+* -t, --timestamp
+
+    Set if we should overwrite the previous backup or append a timestamp (default) to prevent just that.
+    The former is useful when an external backup program handles backup rotation.
+    Set the argument to "false" if there should be no timestamp in the filename.
 
 # Implementation
 
