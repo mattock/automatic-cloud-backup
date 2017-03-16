@@ -1,33 +1,50 @@
 #!/bin/bash
 
 CONFIG="$HOME/.backup.sh.vars"
+ATTACHMENTS="true"
+FILEPREFIX="JIRA"
 
 if [ -r "$CONFIG" ]; then
     . $CONFIG
+    DOWNLOAD_URL="https://${INSTANCE}"
 else
     echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
     exit 1
 fi
 
-usage() {
-    echo "Usage: $0 jira|wiki" 
-    echo
-    exit 1
-}
+while [[ $# -gt 1 ]]
+do
+    key="$1"
 
-if [ "$1" = "jira" ]; then
-    SUBDIR=""
-    DOWNLOAD_URL="https://${INSTANCE}"
-elif [ "$1" = "wiki" ]; then
-    SUBDIR="/wiki"
-    DOWNLOAD_URL="https://${INSTANCE}${SUBDIR}/download"
-else
-    usage
-fi
+    case $key in
+        -s|--source)
+            if [[  $2 == "wiki" ]] || [[ $2 == "confluence" ]]; then
+                INSTANCE=$INSTANCE/wiki
+                DOWNLOAD_URL="https://${INSTANCE}/download"
+                FILEPREFIX="CONFLUENCE"
+            fi
+            shift # past argument
+            ;;
+        -a|--attachments)
+            if [[  $2 == "false" ]]; then
+                ATTACHMENTS="false"
+            fi
+            shift # past argument
+            ;;
+        -t|--timestamp)
+            if [[  $2 == "false" ]]; then
+                TIMESTAMP=false
+            fi
+            shift # past argument
+            ;;
+
+    esac
+    shift # past argument or value
+done
 
 BASENAME=$1
-RUNBACKUP_URL="https://${INSTANCE}${SUBDIR}/rest/obm/1.0/runbackup"
-PROGRESS_URL="https://${INSTANCE}${SUBDIR}/rest/obm/1.0/getprogress.json"   
+RUNBACKUP_URL="https://${INSTANCE}/rest/obm/1.0/runbackup"
+PROGRESS_URL="https://${INSTANCE}/rest/obm/1.0/getprogress.json"
 
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
@@ -36,9 +53,9 @@ TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
 #prevent just that. The former is useful when an external backup program handles 
 #backup rotation.
 if [ $TIMESTAMP = "true" ]; then
-    OUTFILE="${LOCATION}/$BASENAME-backup-${TODAY}.zip"
+    OUTFILE="${LOCATION}/$FILEPREFIX-backup-${TODAY}.zip"
 elif [ $TIMESTAMP = "false" ]; then
-    OUTFILE="${LOCATION}/$BASENAME-backup.zip"
+    OUTFILE="${LOCATION}/$FILEPREFIX-backup.zip"
 else
     echo "ERROR: invalid value for TIMESTAMP: should be either \"true\" or \"false\""
     exit 1
@@ -55,16 +72,16 @@ if [ $? -ne 0 ]; then
 fi
 
 # The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
-BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION --header "X-Atlassian-Token: no-check" -H "X-Requested-With: XMLHttpRequest" -H "Content-Type: application/json"  -X POST $RUNBACKUP_URL -d '{"cbAttachments":"true" }' )
- 
+BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION --header "X-Atlassian-Token: no-check" -H "X-Requested-With: XMLHttpRequest" -H "Content-Type: application/json"  -X POST $RUNBACKUP_URL -d '{"cbAttachments":"${ATTACHMENTS}" }' )
+
 # Checks if we were authorized to create a new backup
-if [ "$(echo "$BKPMSG" | grep -c Unauthorized)" -ne 0 ]; then
+if [ "$(echo "$BKPMSG" | grep -c Unauthorized)" -ne 0 ]  || [ "$(echo "$BKPMSG" | grep -ic "<status-code>401</status-code>")" -ne 0 ]; then
     echo "ERROR: authorization failure"
     exit
 fi
 
 #Checks if the backup exists every 10 seconds, 20 times. If you have a bigger instance with a larger backup file you'll probably want to increase that.
-for (( c=1; c<=20; c++ )) do
+for (( c=1; c<=$PROGRESS_CHECKS; c++ )) do
     PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL)
     FILE_NAME=$(echo "$PROGRESS_JSON" | sed -n 's/.*"fileName"[ ]*:[ ]*"\([^"]*\).*/\1/p')
 
@@ -73,7 +90,7 @@ for (( c=1; c<=20; c++ )) do
     if [ ! -z "$FILE_NAME" ]; then
         break
     fi
-    sleep 10
+    sleep $SLEEP_SECONDS
 done
 
 # If after 20 attempts it still fails it ends the script.
@@ -81,5 +98,5 @@ if [ -z "$FILE_NAME" ]; then
     exit
 else
     # Download the new way, starting Nov 2016
-    curl -s -L --cookie $COOKIE_FILE_LOCATION "$DOWNLOAD_URL/$FILE_NAME" -o "$OUTFILE"
+    curl -s -S -L --cookie $COOKIE_FILE_LOCATION "$DOWNLOAD_URL/$FILE_NAME" -o "$OUTFILE"
 fi
