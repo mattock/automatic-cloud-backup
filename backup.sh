@@ -7,6 +7,7 @@ FILEPREFIX="JIRA"
 if [ -r "$CONFIG" ]; then
     . $CONFIG
     DOWNLOAD_URL="https://${INSTANCE}"
+    INSTANCE_PATH=$INSTANCE
 else
     echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
     exit 1
