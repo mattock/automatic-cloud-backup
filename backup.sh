@@ -7,6 +7,7 @@ FILEPREFIX="JIRA"
 if [ -r "$CONFIG" ]; then
     . $CONFIG
     DOWNLOAD_URL="https://${INSTANCE}"
+    INSTANCE_PATH=$INSTANCE
 else
     echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
     exit 1
@@ -19,8 +20,8 @@ do
     case $key in
         -s|--source)
             if [[  $2 == "wiki" ]] || [[ $2 == "confluence" ]]; then
-                INSTANCE=$INSTANCE/wiki
-                DOWNLOAD_URL="https://${INSTANCE}/download"
+                INSTANCE_PATH=$INSTANCE/wiki
+                DOWNLOAD_URL="https://${INSTANCE_PATH}/download"
                 FILEPREFIX="CONFLUENCE"
             fi
             shift # past argument
@@ -43,8 +44,8 @@ do
 done
 
 BASENAME=$1
-RUNBACKUP_URL="https://${INSTANCE}/rest/obm/1.0/runbackup"
-PROGRESS_URL="https://${INSTANCE}/rest/obm/1.0/getprogress.json"
+RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/obm/1.0/runbackup"
+PROGRESS_URL="https://${INSTANCE_PATH}/rest/obm/1.0/getprogress.json"
 
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
