@@ -70,6 +70,7 @@ COOKIE_FILE_LOCATION="$HOME/.backup.sh-cookie"
 find $COOKIE_FILE_LOCATION -mtime -1 2> /dev/null |grep $COOKIE_FILE_LOCATION 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
     curl --silent --cookie-jar $COOKIE_FILE_LOCATION -X POST "https://${INSTANCE}/rest/auth/1/session" -d "{\"username\": \"$USERNAME\", \"password\": \"$PASSWORD\"}" -H 'Content-Type: application/json' --output /dev/null
+    chmod 600 $COOKIE_FILE_LOCATION
 fi
 
 # The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
