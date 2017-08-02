@@ -6,7 +6,7 @@ FILEPREFIX="JIRA"
 
 if [ -r "$CONFIG" ]; then
     . $CONFIG
-    DOWNLOAD_URL="https://${INSTANCE}"
+    DOWNLOAD_URL="https://${INSTANCE}/plugins/servlet/export/download"
     INSTANCE_PATH=$INSTANCE
 else
     echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
@@ -44,8 +44,9 @@ do
 done
 
 BASENAME=$1
-RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/obm/1.0/runbackup"
-PROGRESS_URL="https://${INSTANCE_PATH}/rest/obm/1.0/getprogress.json"
+RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/backup/1/export/runbackup"
+LASTTASK_URL="https://${INSTANCE_PATH}/rest/backup/1/export/lastTaskId"
+PROGRESS_URL="https://${INSTANCE_PATH}/rest/internal/2/task/progress/"
 
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
@@ -74,7 +75,13 @@ if [ $? -ne 0 ]; then
 fi
 
 # The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
-BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION --header "X-Atlassian-Token: no-check" -H "X-Requested-With: XMLHttpRequest" -H "Content-Type: application/json"  -X POST $RUNBACKUP_URL -d "{\"cbAttachments\":\"${ATTACHMENTS}\" }" )
+BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION 'https://pitcrew.atlassian.net/rest/backup/1/export/runbackup' \
+    -XPOST \
+    -H 'DNT: 1' \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/javascript, */*; q=0.01' \
+    -H 'X-Requested-With: XMLHttpRequest' \
+    --data-binary '{"cbAttachments":"true", "exportToCloud":"true"}' )
 
 # Checks if we were authorized to create a new backup
 if [ "$(echo "$BKPMSG" | grep -c Unauthorized)" -ne 0 ]  || [ "$(echo "$BKPMSG" | grep -ic "<status-code>401</status-code>")" -ne 0 ]; then
@@ -84,12 +91,13 @@ fi
 
 #Checks if the backup exists every 10 seconds, 20 times. If you have a bigger instance with a larger backup file you'll probably want to increase that.
 for (( c=1; c<=$PROGRESS_CHECKS; c++ )) do
-    PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL)
-    FILE_NAME=$(echo "$PROGRESS_JSON" | sed -n 's/.*"fileName"[ ]*:[ ]*"\([^"]*\).*/\1/p')
+    LASTTASKID=$(curl -s --cookie $COOKIE_FILE_LOCATION $LASTTASK_URL)
+    PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL$LASTTASKID)
 
-    echo $PROGRESS_JSON|grep error > /dev/null && break
+    STATUS=$(echo "$PROGRESS_JSON" | jq '.status' -r)
 
-    if [ ! -z "$FILE_NAME" ]; then
+    if [ "$STATUS" == "Success" ]; then
+        FILE_NAME=$(echo $PROGRESS_JSON | jq '.result' -r | jq '"\(.mediaFileId)/\(.fileName)"' -r)
         break
     fi
     sleep $SLEEP_SECONDS
