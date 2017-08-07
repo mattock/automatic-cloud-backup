@@ -75,7 +75,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
-BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION 'https://pitcrew.atlassian.net/rest/backup/1/export/runbackup' \
+BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION $RUNBACKUP_URL \
     -XPOST \
     -H 'DNT: 1' \
     -H 'Content-Type: application/json' \
