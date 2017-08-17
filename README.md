@@ -12,6 +12,10 @@ is not even functional in it current state.
 This fork was created because Atlassian Labs had ignored all community pull 
 requests and issues for several months.
 
+# Requirements
+
+The script uses _curl_ and _jq_.
+
 # Configuration
 
 You will need to create a configuration file for the script to work. To do this, 
