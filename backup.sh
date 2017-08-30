@@ -44,9 +44,15 @@ do
 done
 
 BASENAME=$1
-RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/backup/1/export/runbackup"
 LASTTASK_URL="https://${INSTANCE_PATH}/rest/backup/1/export/lastTaskId"
-PROGRESS_URL="https://${INSTANCE_PATH}/rest/internal/2/task/progress/"
+
+if [ $FILEPREFIX = "JIRA" ]; then
+    RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/backup/1/export/runbackup"
+    PROGRESS_URL="https://${INSTANCE_PATH}/rest/internal/2/task/progress/"
+else
+    RUNBACKUP_URL="https://${INSTANCE_PATH}/rest/obm/1.0/runbackup"
+    PROGRESS_URL="https://${INSTANCE_PATH}/rest/obm/1.0/getprogress.json"
+fi
 
 # Grabs cookies and generates the backup on the UI. 
 TODAY=$(TZ=$TIMEZONE date +%Y%m%d)
@@ -76,29 +82,49 @@ fi
 
 # The $BKPMSG variable will print the error message, you can use it if you're planning on sending an email
 BKPMSG=$(curl -s --cookie $COOKIE_FILE_LOCATION $RUNBACKUP_URL \
-    -XPOST \
+    -X POST \
     -H 'DNT: 1' \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json, text/javascript, */*; q=0.01' \
     -H 'X-Requested-With: XMLHttpRequest' \
-    --data-binary '{"cbAttachments":"true", "exportToCloud":"true"}' )
+    --data-binary "{\"cbAttachments\":\"${ATTACHMENTS}\", \"exportToCloud\":\"true\" }" )
 
 # Checks if we were authorized to create a new backup
-if [ "$(echo "$BKPMSG" | grep -c Unauthorized)" -ne 0 ]  || [ "$(echo "$BKPMSG" | grep -ic "<status-code>401</status-code>")" -ne 0 ]; then
-    echo "ERROR: authorization failure"
-    exit
+if [ $FILEPREFIX = "JIRA" ]; then
+    STATUS_CODE=$(echo "$BKPMSG" | jq '."status-code"' -r)
+
+    if [ "$STATUS_CODE" == "401" ]; then
+        echo "ERROR: authorization failure"
+        exit
+    fi
+else
+    if [ "$(echo "$BKPMSG" | grep -c Unauthorized)" -ne 0 ]  || [ "$(echo "$BKPMSG" | grep -ic "<status-code>401</status-code>")" -ne 0 ]; then
+        echo "ERROR: authorization failure"
+        exit
+    fi
 fi
 
 #Checks if the backup exists every 10 seconds, 20 times. If you have a bigger instance with a larger backup file you'll probably want to increase that.
 for (( c=1; c<=$PROGRESS_CHECKS; c++ )) do
-    LASTTASKID=$(curl -s --cookie $COOKIE_FILE_LOCATION $LASTTASK_URL)
-    PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL$LASTTASKID)
 
-    STATUS=$(echo "$PROGRESS_JSON" | jq '.status' -r)
+    if [ $FILEPREFIX = "JIRA" ]; then
+        LASTTASKID=$(curl -s --cookie $COOKIE_FILE_LOCATION $LASTTASK_URL)
+        PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL$LASTTASKID)
 
-    if [ "$STATUS" == "Success" ]; then
-        FILE_NAME=$(echo $PROGRESS_JSON | jq '.result' -r | jq '"\(.mediaFileId)/\(.fileName)"' -r)
-        break
+        STATUS=$(echo "$PROGRESS_JSON" | jq '.status' -r)
+
+        if [ "$STATUS" == "Success" ]; then
+            FILE_NAME=$(echo $PROGRESS_JSON | jq '.result' -r | jq '"\(.mediaFileId)/\(.fileName)"' -r)
+            break
+        fi
+    else
+        PROGRESS_JSON=$(curl -s --cookie $COOKIE_FILE_LOCATION $PROGRESS_URL)
+        FILE_NAME=$(echo "$PROGRESS_JSON" | sed -n 's/.*"fileName"[ ]*:[ ]*"\([^"]*\).*/\1/p')
+        echo $PROGRESS_JSON|grep error > /dev/null && break
+
+        if [ ! -z "$FILE_NAME" ]; then
+            break
+        fi
     fi
     sleep $SLEEP_SECONDS
 done
