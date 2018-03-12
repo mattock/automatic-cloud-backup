@@ -43,7 +43,6 @@ do
     shift # past argument or value
 done
 
-BASENAME=$1
 LASTTASK_URL="https://${INSTANCE_PATH}/rest/backup/1/export/lastTaskId"
 
 if [ $FILEPREFIX = "JIRA" ]; then
