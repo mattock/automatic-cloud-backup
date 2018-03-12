@@ -104,7 +104,7 @@ else
     fi
 fi
 
-#Checks if the backup exists every 10 seconds, 20 times. If you have a bigger instance with a larger backup file you'll probably want to increase that.
+# Checks if the backup exists every $SLEEP_SECONDS seconds, $PROGRESS_CHECKS times.
 for (( c=1; c<=$PROGRESS_CHECKS; c++ )) do
 
     if [ $FILEPREFIX = "JIRA" ]; then
@@ -129,7 +129,7 @@ for (( c=1; c<=$PROGRESS_CHECKS; c++ )) do
     sleep $SLEEP_SECONDS
 done
 
-# If after 20 attempts it still fails it ends the script.
+# If after $PROGRESS_CHECKS attempts it still fails it ends the script.
 if [ -z "$FILE_NAME" ]; then
     exit
 else
