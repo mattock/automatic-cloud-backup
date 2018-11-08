@@ -67,7 +67,19 @@ else
  
 ## PRINT THE FILE TO DOWNLOAD ##
 echo "File to download: https://${HOSTNAME}/plugins/servlet/${FILE_NAME}"
+
+#Check if we should overwrite the previous backup or append a timestamp to
+#prevent just that. The former is useful when an external backup program handles
+#backup rotation.
+if [ $TIMESTAMP = "true" ]; then
+    OUTFILE="${DOWNLOAD_FOLDER}/JIRA-backup-${TODAY}.zip"
+elif [ $TIMESTAMP = "false" ]; then
+    OUTFILE="${DOWNLOAD_FOLDER}/JIRA-backup.zip"
+else
+    echo "ERROR: invalid value for TIMESTAMP: should be either \"true\" or \"false\""
+    exit 1
+fi
  
-curl -s -L -u ${EMAIL}:${API_TOKEN} -X GET "https://${HOSTNAME}/plugins/servlet/${FILE_NAME}" -o "$DOWNLOAD_FOLDER/JIRA-backup-${TODAY}.zip"
+curl -s -L -u ${EMAIL}:${API_TOKEN} -X GET "https://${HOSTNAME}/plugins/servlet/${FILE_NAME}" -o "$OUTFILE"
  
 fi
