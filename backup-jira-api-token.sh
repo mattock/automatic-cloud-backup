@@ -3,24 +3,17 @@
  
 ###--- CONFIGURATION SECTION STARTS HERE ---###
 # MAKE SURE ALL THE VALUES IN THIS SECTION ARE CORRECT BEFORE RUNNIG THE SCRIPT
-EMAIL=
-API_TOKEN=
-HOSTNAME=xxxx.atlassian.net
-DOWNLOAD_FOLDER="/absolute/path/here"
- 
-### Checks for progress max 3000 times, waiting 20 seconds between one check and the other ###
-# If your instance is big you may want to increase the below values #
-PROGRESS_CHECKS=3000
-SLEEP_SECONDS=20
- 
-# Set this to your Atlassian instance's timezone.
-# See this for a list of possible values:
-# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-TIMEZONE=Europe/Amsterdam
-  
-###--- END OF CONFIGURATION SECTION ---####
- 
- 
+
+CONFIG="$HOME/.backup.sh.vars"
+
+if [ -r "$CONFIG" ]; then
+    . $CONFIG
+else
+    echo "Usable to load $CONFIG! Please create one based on backup.sh.vars.example"
+    exit 1
+fi
+
+
 ####- START SCRIPT -#####
  
 TODAY=$(TZ=$TIMEZONE date +%d-%m-%Y)
