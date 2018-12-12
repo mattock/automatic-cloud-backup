@@ -1,7 +1,13 @@
-USERNAME=youruser
-PASSWORD=yourpassword
+USERNAME=confluence_username
+PASSWORD=confluence_password
+EMAIL=email_for_jira_authentication
+API_TOKEN=api_token_for_jira_authentication
 INSTANCE=example.atlassian.net
 LOCATION=/where/to/store/the/file
+
+# The new JIRA backup script reinvented these variable names
+HOSTNAME=$INSTANCE
+DOWNLOAD_FOLDER=$LOCATION
 
 # Append a timestamp to the backed up file (true/false). Set to false if an  
 # external backup applications handles backup rotatoin. 
